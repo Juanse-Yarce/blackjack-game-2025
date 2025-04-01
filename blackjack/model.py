@@ -108,7 +108,7 @@ class Mano:
     def limpiar(self):
         self.cartas.clear()
 
-    def __str__(self) -> str:
+    def __str__(self):
         str_mano = ""
         for carta in self.cartas:
             str_mano += f"{str(carta):^5}"
@@ -163,21 +163,18 @@ class Blackjack:
         if self.cupier.mano:
             self.cupier.mano.limpiar()
 
-
-        self.jugador.mano.limpiar()
-        self.cupier.mano.limpiar()
         self.baraja.reiniciar()
-
         self.baraja.revolver()
 
-        cartas: list[Carta] = [self.baraja.repartir_carta(), self.baraja.repartir_carta()]
-        self.jugador.inicializar_mano(cartas)
-
-        cartas: list[Carta] = [self.baraja.repartir_carta(oculta=True), self.baraja.repartir_carta()]
-        self.cupier.inicializar_mano(cartas)
+        self.jugador.inicializar_mano([self.baraja.repartir_carta(), self.baraja.repartir_carta()])
+        self.cupier.inicializar_mano([self.baraja.repartir_carta(), self.baraja.repartir_carta(oculta=True)])
 
     def repartir_carta_a_jugador(self):
         self.jugador.recibir_carta(self.baraja.repartir_carta())
+
+    def repartir_carta_a_la_casa(self):
+        carta = self.baraja.repartir_carta()
+        self.cupier.recibir_carta(carta)
 
     def destapar_mano_de_la_casa(self):
         self.cupier.mano.destapar()
@@ -198,15 +195,32 @@ class Blackjack:
     def jugador_gano(self) -> bool:
         valor_mano_casa = self.cupier.mano.calcular_valor()
         valor_mano_jugador = self.jugador.mano.calcular_valor()
-        return self.jugador.mano.es_blackjack() or  21 > valor_mano_jugador > valor_mano_casa or valor_mano_casa > 21
+
+        if self.jugador.mano.es_blackjack():
+            return True
+
+        if type(valor_mano_casa) is str:
+            return False
+        else:
+            return valor_mano_casa < valor_mano_jugador <= 21 or valor_mano_casa > 21
 
     def casas_gano(self) -> bool:
         valor_mano_casa = self.cupier.mano.calcular_valor()
         valor_mano_jugador = self.jugador.mano.calcular_valor()
-        return valor_mano_jugador < valor_mano_casa <= 21 or valor_mano_jugador > 21
+
+        if valor_mano_jugador > 21:
+            return True
+
+        if type(valor_mano_casa) is str:
+            return False
+        else:
+            return valor_mano_jugador < valor_mano_casa <= 21
 
     def hay_empate(self) -> bool:
         valor_mano_casa = self.cupier.mano.calcular_valor()
         valor_mano_jugador = self.jugador.mano.calcular_valor()
-        return valor_mano_jugador <= 21 and valor_mano_casa <= 21 and valor_mano_casa == valor_mano_jugador
 
+        if type(valor_mano_casa) is str:
+            return False
+        else:
+            return valor_mano_jugador == valor_mano_casa and valor_mano_jugador <= 21 and valor_mano_casa <= 21
